@@ -2,6 +2,8 @@ category: Utilities
 commonfields:
   id: Proofpoint
   version: -1
+tests:
+  - No tests
 configuration:
 - defaultvalue: https://data.emaildefense.proofpoint.com/v1
   display: Server URL (e.g. https://data.emaildefense.proofpoint.com/v1)
