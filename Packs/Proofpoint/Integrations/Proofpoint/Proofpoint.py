@@ -1,5 +1,7 @@
 import demistomock as demisto  # noqa: F401
 from CommonServerPython import *  # noqa: F401
+
+
 import urllib3
 import traceback
 import requests
@@ -49,122 +51,6 @@ class Client(BaseClient):
         else:
             return []
 
-    def get_dmarc_list(self):
-        if "domain-list" in demisto.params().keys() and len(demisto.params().get("domain-list")) > 0:
-            return demisto.params().get("domain-list").splitlines()
-        return []
-
-    def generate_csv_data(self, data: list):
-        out = []
-        out.append([
-            "Hostname",
-            "Instance Org",
-            "InList",
-            "SenderName",
-            "SenderVerified",
-            "SenderVerifiedStatus",
-            "Policy",
-            "BlockedMailCount",
-            "DKIM.alignCount",
-            "DKIM.failCount",
-            "DKIM.misalignCount",
-            "DKIM.neutralCount",
-            "DKIM.passAlignCount",
-            "DKIM.passCount",
-            "DKIM.totalCount",
-            "DMARC.doublePassCount",
-            "DMARC.failCount",
-            "DMARC.passCount",
-            "SPF.alignCount",
-            "SPF.failCount",
-            "SPF.misalignCount",
-            "SPF.neutralCount",
-            "SPF.passAlignCount",
-            "SPF.passCount",
-            "SPF.totalCount",
-            "TotalMailCount"
-        ])  # header row
-
-        newdata = data
-        domainList = self.get_dmarc_list()
-        goodDomainList = []
-        for server in data:
-            goodDomainList.append(server["Hostname"])
-
-        for domain in domainList:
-            if not domain in goodDomainList:
-                newdata.append({
-                    "Hostname": domain,
-                    "InList": False,
-                    "InstanceName": "N/A"
-                })
-
-        for server in newdata:
-            row = [
-                server["Hostname"],
-                server["InstanceName"],
-                server["InList"]
-            ]
-
-            if "SenderName" in server.keys():
-                row.append(server["SenderName"])
-                row.append(server["SenderVerified"])
-                row.append(server["SenderVerifiedStatus"])
-            else:
-                for i in range(3):
-                    row.append("")
-
-            if "Policy" in server.keys():
-                row.append(server["Policy"])
-            else:
-                row.append("")
-
-            if "BlockedMailCount" in server.keys():
-                row.append(server["BlockedMailCount"])
-            else:
-                row.append("")
-
-            if "DKIM" in server.keys():
-                row.append(server["DKIM"]["alignCount"] or "")
-                row.append(server["DKIM"]["failCount"] or "")
-                row.append(server["DKIM"]["misalignCount"] or "")
-                row.append(server["DKIM"]["neutralCount"] or "")
-                row.append(server["DKIM"]["passAlignCount"] or "")
-                row.append(server["DKIM"]["passCount"] or "")
-                row.append(server["DKIM"]["totalCount"] or "")
-            else:
-                for i in range(7):
-                    row.append("")
-
-            if "DMARC" in server.keys():
-                row.append(server["DMARC"]["doublePassCount"] or "")
-                row.append(server["DMARC"]["failCount"] or "")
-                row.append(server["DMARC"]["passCount"] or "")
-            else:
-                for i in range(3):
-                    row.append("")
-
-            if "SPF" in server.keys():
-                row.append(server["SPF"]["alignCount"] or "")
-                row.append(server["SPF"]["failCount"] or "")
-                row.append(server["SPF"]["misalignCount"] or "")
-                row.append(server["SPF"]["neutralCount"] or "")
-                row.append(server["SPF"]["passAlignCount"] or "")
-                row.append(server["SPF"]["passCount"] or "")
-                row.append(server["SPF"]["totalCount"] or "")
-            else:
-                for i in range(7):
-                    row.append("")
-
-            if "TotalMailCount" in server.keys():
-                row.append(server["TotalMailCount"])
-            else:
-                row.append("")
-
-            out.append(row)
-
-        return out
-
     def get_dmarc_policies(self):
         headers = CaseInsensitiveDict()  # type: CaseInsensitiveDict
         headers["Authorization"] = "Basic " + self.api_string
@@ -177,7 +63,7 @@ class Client(BaseClient):
             policies.update({line["domainName"]: line["dmarc"]["policy"]})
         return policies
 
-    def get_data_for_all(self, domain_list: list, previous_days: str):
+    def get_data_for_all(self, previous_days: str):
         """
         Gets the DMARC Pass and Fail count for a list of domains
         Does a single API request for all data and searches through it, rather than seperate calls per domain
@@ -186,49 +72,49 @@ class Client(BaseClient):
         headers = CaseInsensitiveDict()  # type: CaseInsensitiveDict
         headers["Authorization"] = "Basic " + self.api_string
         params = {
-            "data_source": "business-gateway",
+            "data_source": "consumer",
             "order_by": "domain",
             "order_dir": "asc",
             "previous_days": previous_days
         }
         url = self.base_url + "/aggregate-results"
-
         resp = requests.get(url, params=params, headers=headers)
-
-        policies = self.get_dmarc_policies()
 
         if resp.status_code != 200:
             return []
-        try:
-            out = []  # type: list
-            results = {}  # type: dict
-            data = resp.json()["data"]
-            hostnames_from_api = []
 
-            for entry in data:
-                try:
-                    hostname = entry["domainName"]
-                    hostnames_from_api.append(hostname)
-                    out.append({
-                        "Hostname": hostname,
-                        "InList": hostname in domain_list,
-                        "InstanceName": self.instance_name,
-                        "TotalMailCount": entry["totalMailCount"] or 0,
-                        "BlockedMailCount": entry["blockedMailCount"] or 0,
-                        "SenderName": entry["sender"]["name"],
-                        "SenderVerified": entry["sender"]["verified"] or "N/A",
-                        "SenderVerifiedStatus": entry["sender"]["verifiedStatus"] or "N/A",
-                        "DMARC": entry["dmarc"] or {},
-                        "SPF": entry["spf"] or {},
-                        "DKIM": entry["dkim"] or {},
-                        "Policy": policies.get(hostname) or "N/A"
-                    })
-                except Exception:
-                    continue
+        output = []  # type: list
+        data = resp.json()["data"]
+        policies = self.get_dmarc_policies()
 
-        except IndexError:
-            return []
-        return out
+        for entry in data:
+            hostname = entry["domainName"]
+            result = {
+                "Hostname": hostname,
+                "InstanceName": self.instance_name,
+                "TotalMailCount": entry["totalMailCount"] or 0,
+                "BlockedMailCount": entry["blockedMailCount"] or 0,
+                "DMARC": entry["dmarc"] or {},
+                "SPF": entry["spf"] or {},
+                "DKIM": entry["dkim"] or {},
+                "Policy": policies.get(hostname) or "N/A"
+            }
+            if "sender" in entry.keys() and entry["sender"] != None:
+                result.update({
+                    "SenderName": entry["sender"]["name"] or "N/A",
+                    "SenderVerified": entry["sender"]["verified"] or "N/A",
+                    "SenderVerifiedStatus": entry["sender"]["verifiedStatus"] or "N/A",
+                })
+            else:
+                result.update({
+                    "SenderName":"N/A", 
+                    "SenderVerified": "N/A",
+                    "SenderVerifiedStatus": "N/A"
+                })
+            
+            output.append(result)
+
+        return output
 
     def check_api(self):
 
@@ -240,24 +126,6 @@ class Client(BaseClient):
 
 
 ''' HELPER FUNCTIONS '''
-
-
-def merge(a, b, path=None):
-    "merges b into a"
-    if path is None:
-        path = []
-    for key in b:
-        if key in a:
-            if isinstance(a[key], dict) and isinstance(b[key], dict):
-                merge(a[key], b[key], path + [str(key)])
-            elif a[key] == b[key]:
-                pass  # same leaf value
-            elif isinstance(a[key], int) and isinstance(b[key], int):
-                a[key] += b[key]
-        else:
-            a[key] = b[key]
-    return a
-
 
 def wait_rate_limit():
     time.sleep(250 / 1000)
@@ -314,20 +182,6 @@ def get_domains_command(clients: list) -> CommandResults:
     )
 
 
-def generate_csv_command(clients: list) -> CommandResults:
-    csv_data = clients[0].generate_csv_data(demisto.context()["Proofpoint"]["DMARC"])
-    f = StringIO()
-    csv.writer(f).writerows(csv_data)
-
-    return (
-        fileResult(
-            filename=f'report.csv',
-            data=f.getvalue(),
-            file_type=entryTypes['entryInfoFile']
-        )
-    )
-
-
 def get_list_command(clients: list) -> CommandResults:
     dmarc_list = clients[0].get_dmarc_list()
     dmarc_list = demisto.context()["lists"]["test-list2"]
@@ -339,10 +193,9 @@ def get_list_command(clients: list) -> CommandResults:
 
 
 def get_all_dmarc_command(clients: list, previous_days: str) -> CommandResults:
-    domains = demisto.context()["Proofpoint"]["Domains"]
     data = []
     for client in clients:
-        data += client.get_data_for_all(domains, previous_days)
+        data += client.get_data_for_all(previous_days)
         wait_rate_limit()
 
     return CommandResults(
@@ -365,7 +218,9 @@ def main() -> None:
     # if your Client class inherits from BaseClient, system proxy is handled
     # out of the box by it, just pass ``proxy`` to the Client constructor
     base_url = demisto.params().get("url")
-    previous_days = demisto.params().get("previous_days")
+    previous_days = demisto.args().get("previous_days")
+    if previous_days == None:
+        previous_days = demisto.params().get("previous_days")
 
     # INTEGRATION DEVELOPER TIP
     # You can use functions such as ``demisto.debug()``, ``demisto.info()``,
@@ -393,9 +248,6 @@ def main() -> None:
 
         elif demisto.command() == 'proofpoint-get-list':
             return_results(get_list_command(clients))
-
-        elif demisto.command() == 'proofpoint-generate-csv':
-            return_results(generate_csv_command(clients))
 
     # Log exceptions and return errors
     except Exception as e:

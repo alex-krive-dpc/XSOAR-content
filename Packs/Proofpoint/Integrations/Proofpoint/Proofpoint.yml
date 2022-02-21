@@ -2,63 +2,62 @@ category: Utilities
 commonfields:
   id: Proofpoint
   version: -1
-tests:
-  - No tests
 configuration:
-- defaultvalue: https://data.emaildefense.proofpoint.com/v1
-  display: Server URL (e.g. https://data.emaildefense.proofpoint.com/v1)
-  name: url
-  required: true
-  type: 0
-- display: Fetch indicators
-  name: feed
-  required: false
-  type: 8
-- defaultvalue: "90"
-  display: How many days back to search
-  name: previous_days
-  required: false
-  type: 0
-- display: ""
-  name: domain-list
-  required: false
-  type: 12
-- additionalinfo: I wish this was a list
-  display: 'Api data in CSV: Name,Key,Secret'
-  name: api_data
-  required: false
-  type: 12
-- defaultvalue: "250"
-  display: Rate Limiting in ms
-  name: rate_limit_delay
-  required: true
-  type: 0
+  - name: url
+    display: Server URL (e.g. https://data.emaildefense.proofpoint.com/v1)
+    required: true
+    defaultvalue: https://data.emaildefense.proofpoint.com/v1
+    type: 0
+    additionalinfo: null
+  - name: feed
+    display: Fetch indicators
+    required: false
+    defaultvalue: "true"
+    type: 8
+    additionalinfo: null
+  - name: previous_days
+    display: How many days back to search
+    required: false
+    defaultvalue: "90"
+    type: 0
+    additionalinfo: null
+  - name: api_data
+    display: "Api data in CSV: Name,Key,Secret"
+    required: false
+    defaultvalue: null
+    type: 12
+    additionalinfo: I wish this was a list
+  - name: rate_limit_delay
+    display: Rate Limiting in ms
+    required: true
+    defaultvalue: "250"
+    type: 0
+    additionalinfo: null
 description: Proofpoint integration for getting DMARC information
 display: Proofpoint
 name: Proofpoint
 script:
   commands:
-  - arguments: []
-    description: Get a list of all the domains and put them into the context data
-    name: proofpoint-get-domains
-    outputs:
-    - contextPath: Proofpoint.Domains
-      description: List of domains pulled from proofpoint
-      type: unknown
-  - arguments: []
-    description: Gets DMARC information for all Domains
-    name: proofpoint-get-dmarc-all
-    outputs:
-    - contextPath: Proofpoint.DMARC
-      description: List of domains and relevant DMARC data
-  - arguments: []
-    description: Get the list of Proofpoint domains - Used for testing
-    name: proofpoint-get-list
-  - arguments: []
-    description: Generate CSV Report of Proofpoint data
-    name: proofpoint-generate-csv
+    - arguments: []
+      description: Get a list of all the domains and put them into the context data
+      name: proofpoint-get-domains
+      outputs:
+        - contextPath: Proofpoint.Domains
+          description: List of domains pulled from proofpoint
+          type: unknown
+    - arguments:
+        - name: previous_days
+      description: Gets DMARC information for all Domains
+      name: proofpoint-get-dmarc-all
+      outputs:
+        - contextPath: Proofpoint.DMARC
+    - arguments: []
+      name: proofpoint-get-list
+      outputs: []
   dockerimage: demisto/python3:3.9.7.24076
   runonce: false
-  script: ''
+  script: ""
   subtype: python3
   type: python
+tests:
+  - No tests

@@ -1,0 +1,24 @@
+category: Utilities
+commonfields:
+  id: Cydarm
+  version: -1
+configuration:
+- defaultvalue: https://viccsu-zfnxqn7k.cydarm.com
+  display: 'Endpoint URL (eg: https://instance.cydarm.com)'
+  name: endpoint
+  required: true
+  type: 0
+- display: Username
+  displaypassword: Password
+  name: login
+  required: true
+  type: 9
+description: Cydarm Ticketing Integration
+display: Cydarm
+name: Cydarm
+script:
+  dockerimage: demisto/python3:3.9.8.24399
+  runonce: false
+  script: ''
+  subtype: python3
+  type: python
