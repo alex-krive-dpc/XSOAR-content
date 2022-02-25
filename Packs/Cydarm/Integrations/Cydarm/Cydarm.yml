@@ -3,22 +3,72 @@ commonfields:
   id: Cydarm
   version: -1
 configuration:
-- defaultvalue: https://viccsu-zfnxqn7k.cydarm.com
-  display: 'Endpoint URL (eg: https://instance.cydarm.com)'
-  name: endpoint
-  required: true
-  type: 0
-- display: Username
-  displaypassword: Password
-  name: login
-  required: true
-  type: 9
+  - name: endpoint
+    display: "Endpoint URL (eg: https://instance.cydarm.com)"
+    required: true
+    defaultvalue: https://viccsu-zfnxqn7k.cydarm.com
+    type: 0
+    additionalinfo: null
+  - name: login
+    display: Username
+    required: true
+    defaultvalue: null
+    type: 9
+    additionalinfo: null
+    displaypassword: Password
+    hiddenusername: false
 description: Cydarm Ticketing Integration
 display: Cydarm
 name: Cydarm
 script:
-  dockerimage: demisto/python3:3.9.8.24399
+  commands:
+    - name: cydarm-case-by-locator
+      description: Get Cydarm Case By Locator
+      deprecated: false
+      arguments:
+        - name: locator
+          description: Case Locator
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs: []
+    - name: cydarm-case-actions
+      description: description
+      deprecated: false
+      arguments:
+        - name: uuid
+          description: Case UUID
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs:
+        - contextPath: Cydarm.CaseActions.actionDescription
+          description: Action Description
+          type: String
+        - contextPath: Cydarm.CaseActions.actionUuid
+          description: Action UUID
+          type: String
+        - contextPath: Cydarm.CaseActions.actionName
+          description: Action Name
+          type: String
+        - contextPath: Cydarm.CaseActions.created
+          description: Action Created DateTime
+          type: String
+        - contextPath: Cydarm.CaseActions.modified
+          description: Action Last Modified DateTime
+          type: String
+        - contextPath: Cydarm.CaseActions.caseUuid
+          description: Linked Case UUID
+          type: String
+  dockerimage: demisto/python3:3.10.1.26972
   runonce: false
-  script: ''
+  script: ""
   subtype: python3
   type: python
+tests:
+  - No tests
+fromversion: 5.5.0
