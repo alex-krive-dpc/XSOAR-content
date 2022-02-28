@@ -103,6 +103,72 @@ script:
         - contextPath: Cydarm.CaseActions.caseUuid
           description: Linked Case UUID
           type: String
+    - name: cydarm-case-data-stubs
+      description: Get Case Data Stubs
+      deprecated: false
+      arguments:
+        - name: uuid
+          description: Case UUID
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs:
+        - contextPath: Cydarm.CaseDataStub.acl
+          description: Case Data ACL
+          type: String
+        - contextPath: Cydarm.CaseDataStub.caseuuid
+          description: Stub linked case UUID
+          type: String
+        - contextPath: Cydarm.CaseDataStub.creatorusername
+          description: The name of the creator user
+          type: String
+        - contextPath: Cydarm.CaseDataStub.datalocationtype
+          description: Where the data is stored
+          type: String
+        - contextPath: Cydarm.CaseDataStub.datasize
+          description: Size of the data in bytes
+          type: Number
+        - contextPath: Cydarm.CaseDataStub.datasource
+          description: Where the data came from
+          type: String
+        - contextPath: Cydarm.CaseDataStub.deleted
+          description: Has the data been deleted?
+          type: Boolean
+        - contextPath: Cydarm.CaseDataStub.mimetype
+          description: MIME type of the data
+          type: String
+        - contextPath: Cydarm.CaseDataStub.significance
+          description: Significance of the data
+          type: String
+        - contextPath: Cydarm.CaseDataStub.uuid
+          description: Data UUID
+          type: String
+    - name: cydarm-get-data-object
+      description: Gets the details of a case data object
+      deprecated: false
+      arguments:
+        - name: uuid
+          description: Object UUID
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs:
+        - contextPath: Cydarm.CaseData.data
+          description: Object Data
+          type: String
+        - contextPath: Cydarm.CaseData.mimetype
+          description: Data MIME Type
+          type: String
+        - contextPath: Cydarm.CaseData.uuid
+          description: Data Object UUID
+          type: String
+        - contextPath: Cydarm.CaseData.encryptionkey
+          description: Data Encryption key (if any)
+          type: String
   dockerimage: demisto/python3:3.10.1.26972
   runonce: false
   script: ""

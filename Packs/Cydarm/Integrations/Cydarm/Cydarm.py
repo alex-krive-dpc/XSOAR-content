@@ -1,3 +1,4 @@
+from asyncore import read
 import demistomock as demisto  # noqa: F401
 from CommonServerPython import *  # noqa: F401
 
@@ -94,8 +95,23 @@ class Client(BaseClient):
             return r.json()
         raise Exception("Failed to get Case data: " + r.text)
 
-    def addCaseData(self, uuid: str, dataString: str, dataSource: str):
-        pass
+    def getDataObject(self, uuid: str):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api/data/{uuid}"
+        r = requests.get(url, headers=headers)
+        if r.status_code == 200:
+            self.logout(login_token)
+            js = r.json()
+            data = base64.b64decode(js["bytedata"]).decode()
+            js.pop("bytedata")
+            js.update({"data": data})
+            return js
+        return {}
+
 
 
 ''' HELPER FUNCTIONS '''
@@ -122,6 +138,24 @@ def get_case_by_locator(client: Client, locator: str) -> dict:
         outputs_prefix='Cydarm.Case',
         readable_output=new_data,
         outputs=new_data
+    )
+
+def get_case_data_stubs(client: Client, uuid: str):
+    data = client.getCaseDataStubs(uuid)
+
+    return CommandResults(
+        outputs_prefix="Cydarm.CaseDataStub",
+        readable_output=data,
+        outputs=data
+    )
+
+def get_data_object(client: Client, uuid: str):
+    data = client.getDataObject(uuid)
+
+    return CommandResults(
+        outputs_prefix="Cydarm.CaseData",
+        readable_output=data,
+        outputs=data
     )
 
 def get_case_actions(client: Client, uuid: str):
@@ -172,6 +206,12 @@ def main() -> None:
             return_results(result)
         elif demisto.command() == "cydarm-case-actions":
             result = get_case_actions(client, demisto.args()["uuid"])
+            return_results(result)
+        elif demisto.command() == "cydarm-case-data-stubs":
+            result = get_case_data_stubs(client, demisto.args()["uuid"])
+            return_results(result)
+        elif demisto.command() == "cydarm-get-data-object":
+            result = get_data_object(client, demisto.args()["uuid"])
             return_results(result)
 
     # Log exceptions and return errors
