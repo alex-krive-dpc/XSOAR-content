@@ -45,27 +45,57 @@ class Client(BaseClient):
         url = self.endpoint + "/cydarm-api/case/locator/" + locator
         login_status, login_token = self.login()
         if login_status != 200:
-            return {}
+            raise Exception("Failed to login!")
 
         headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             self.logout(login_token)
             return r.json()
-        return {}
+        raise Exception("Failed to get Case: " + r.text)
     
     def getCaseActions(self, uuid: str):
         url = self.endpoint + f"/cydarm-api/case/{uuid}/action"
         login_status, login_token = self.login()
         if login_status != 200:
-            return {}
+            raise Exception("Failed to login!")
         
         headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
         r = requests.get(url, headers=headers)
         if r.status_code == 200:
             self.logout(login_token)
             return r.json()
-        return {}
+        raise Exception("Failed to get Actions: " + r.text)
+    
+    def getUserInfo(self):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        jti = json.loads(base64.b64decode(login_token.split(".")[1] + "==="))["jti"]
+        url = self.endpoint + "/cydarm-api/auth/session/" + jti
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        r = requests.get(url, headers=headers)
+        if r.status_code == 200:
+            self.logout(login_token)
+            return r.json()
+        raise Exception("Failed to get User data: " + r.text)
+    
+    def getCaseDataStubs(self, uuid: str):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api/case/{uuid}/data"
+        r = requests.get(url, headers=headers)
+        if r.status_code == 200:
+            self.logout(login_token)
+            return r.json()
+        raise Exception("Failed to get Case data: " + r.text)
+
+    def addCaseData(self, uuid: str, dataString: str, dataSource: str):
+        pass
 
 
 ''' HELPER FUNCTIONS '''
@@ -96,13 +126,20 @@ def get_case_by_locator(client: Client, locator: str) -> dict:
 
 def get_case_actions(client: Client, uuid: str):
     data = client.getCaseActions(uuid)
-    values = ["actionUuid", "actionDescription", "actionName", "created", "modified", "caseUuid"]
-    new_data = {key: data[key] for key in values}
 
     return CommandResults(
         outputs_prefix='Cydarm.CaseActions',
-        readable_output=new_data,
-        outputs=new_data
+        readable_output=data,
+        outputs=data
+    )
+
+def get_user_info(client: Client):
+    data = client.getUserInfo()
+    values = [""]
+    return CommandResults(
+        outputs_prefix='Cydarm.CaseActions',
+        readable_output=data,
+        outputs=data
     )
 
 ''' MAIN FUNCTION '''

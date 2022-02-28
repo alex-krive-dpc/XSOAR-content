@@ -33,7 +33,46 @@ script:
           defaultValue: ""
           predefined:
             - ""
-      outputs: []
+      outputs:
+        - contextPath: Cydarm.Case.org
+          description: Case Org
+          type: String
+        - contextPath: Cydarm.Case.created
+          description: Case Created DateTime
+          type: String
+        - contextPath: Cydarm.Case.modified
+          description: Case Modified DateTime
+          type: String
+        - contextPath: Cydarm.Case.acl
+          description: Case ACL UUID
+          type: String
+        - contextPath: Cydarm.Case.closed
+          description: Case Closed DateTime (empty if not closed)
+          type: String
+        - contextPath: Cydarm.Case.assignee
+          description: Username assigned to case
+          type: String
+        - contextPath: Cydarm.Case.metadata
+          description: Case Metadata
+          type: Unknown
+        - contextPath: Cydarm.Case.status
+          description: Case Status
+          type: String
+        - contextPath: Cydarm.Case.locator
+          description: Case Locator
+          type: String
+        - contextPath: Cydarm.Case.tags
+          description: Case Tags
+          type: Unknown
+        - contextPath: Cydarm.Case.uuid
+          description: Case UUID
+          type: String
+        - contextPath: Cydarm.Case.description
+          description: Case Description
+          type: String
+        - contextPath: Cydarm.Case.severity
+          description: Case Severity Level
+          type: Number
     - name: cydarm-case-actions
       description: description
       deprecated: false
