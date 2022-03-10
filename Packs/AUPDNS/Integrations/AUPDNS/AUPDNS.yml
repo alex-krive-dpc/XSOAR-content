@@ -1,0 +1,159 @@
+category: Utilities
+commonfields:
+  id: AUPDNS
+  version: -1
+configuration:
+- display: Nameserver 1
+  name: nameserver1
+  required: true
+  type: 0
+- display: Nameserver 2
+  name: nameserver2
+  required: false
+  type: 0
+description: Checks domain against AUPDNS DNS Servers
+display: AUPDNS
+name: AUPDNS
+script:
+  commands:
+  - arguments:
+    - default: true
+      description: List of Domains.
+      isArray: true
+      name: domain
+    - defaultValue: "65"
+      description: If the domain has reputation above the threshold then the domain
+        defined as malicious. If threshold not set, then threshold from instance configuration
+        is used.
+      name: threshold
+    description: Returns Domain information and reputation.
+    name: domain
+    outputs:
+    - contextPath: DBotScore.Indicator
+      description: The indicator that was tested.
+      type: String
+    - contextPath: DBotScore.Score
+      description: The actual score.
+      type: Number
+    - contextPath: DBotScore.Type
+      description: The indicator type.
+      type: String
+    - contextPath: DBotScore.Vendor
+      description: The vendor used to calculate the score.
+      type: String
+    - contextPath: Domain.Name
+      description: The domain name.
+      type: String
+    - contextPath: Domain.Malicious.Vendor
+      description: The vendor reporting the domain as malicious.
+      type: String
+    - contextPath: Domain.Malicious.Description
+      description: A description explaining why the domain was reported as malicious.
+      type: String
+    - contextPath: Domain.Registrant.Name
+      description: The name of the registrant.
+      type: String
+    - contextPath: Domain.Registrant.Country
+      description: The country of the registrant.
+      type: String
+    - contextPath: Domain.Organization
+      description: The organization of the domain.
+      type: String
+    - contextPath: Domain.CreationDate
+      description: The creation date of the domain. Format is ISO8601 (i.e. '2020-04-30T10:35:00.000Z').
+      type: Date
+    - contextPath: Domain.ExpirationDate
+      description: The expiration date of the domain. Format is ISO8601 (i.e. '2020-04-30T10:35:00.000Z').
+      type: Date
+    - contextPath: Domain.UpdatedDate
+      description: The date when the domain was last updated. Format is ISO8601 (i.e.
+        '2020-04-30T10:35:00.000Z').
+      type: Date
+    - contextPath: Domain.NameServers
+      description: Name servers of the domain.
+      type: String
+    - contextPath: Domain.WHOIS.NameServers
+      description: A CSV string of name servers, for example 'ns1.bla.com, ns2.bla.com'.
+      type: String
+    - contextPath: Domain.WHOIS.CreationDate
+      description: The creation date of the domain. Format is ISO8601 (i.e. '2020-04-30T10:35:00.000Z').
+      type: Date
+    - contextPath: Domain.WHOIS.UpdatedDate
+      description: The date when the domain was last updated. Format is ISO8601 (i.e.
+        '2020-04-30T10:35:00.000Z').
+      type: Date
+    - contextPath: Domain.WHOIS.ExpirationDate
+      description: The expiration date of the domain.
+      type: Date
+    - contextPath: Domain.WHOIS.Registrar.Name
+      description: The name of the registrar, for example 'GoDaddy'
+      type: String
+    - contextPath: IP.ASN
+      description: The autonomous system name for the IP address.
+      type: String
+    - contextPath: HelloWorld.Domain.address
+      description: Domain admin address.
+      type: String
+    - contextPath: HelloWorld.Domain.city
+      description: Domain admin city.
+      type: String
+    - contextPath: HelloWorld.Domain.country
+      description: Domain admin country.
+      type: String
+    - contextPath: HelloWorld.Domain.creation_date
+      description: Domain creation date. Format is ISO8601.
+      type: Date
+    - contextPath: HelloWorld.Domain.dnssec
+      description: DNSSEC status.
+      type: String
+    - contextPath: HelloWorld.Domain.domain
+      description: The domain name.
+      type: String
+    - contextPath: HelloWorld.Domain.domain_name
+      description: Domain name options.
+      type: String
+    - contextPath: HelloWorld.Domain.emails
+      description: Contact emails.
+      type: String
+    - contextPath: HelloWorld.Domain.expiration_date
+      description: Expiration date. Format is ISO8601.
+      type: Date
+    - contextPath: HelloWorld.Domain.name
+      description: Domain admin name.
+      type: String
+    - contextPath: HelloWorld.Domain.name_servers
+      description: Name server.
+      type: String
+    - contextPath: HelloWorld.Domain.org
+      description: Domain organization.
+      type: String
+    - contextPath: HelloWorld.Domain.referral_url
+      description: Referral URL.
+      type: Unknown
+    - contextPath: HelloWorld.Domain.registrar
+      description: Domain registrar.
+      type: String
+    - contextPath: HelloWorld.Domain.score
+      description: Reputation score from HelloWorld for this domain (0 to 100, where
+        higher is worse).
+      type: Number
+    - contextPath: HelloWorld.Domain.state
+      description: Domain admin state.
+      type: String
+    - contextPath: HelloWorld.Domain.status
+      description: Domain status.
+      type: String
+    - contextPath: HelloWorld.Domain.updated_date
+      description: Updated date. Format is ISO8601.
+      type: Date
+    - contextPath: HelloWorld.Domain.whois_server
+      description: WHOIS server.
+      type: String
+    - contextPath: HelloWorld.Domain.zipcode
+      description: Domain admin zipcode.
+      type: Unknown
+  dockerimage: demisto/dnspython:1.0.0.12410
+  runonce: false
+  script: ''
+  subtype: python3
+  type: python
