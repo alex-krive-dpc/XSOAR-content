@@ -17,6 +17,12 @@ configuration:
     additionalinfo: null
     displaypassword: Password
     hiddenusername: false
+  - name: org_name
+    display: Org Name
+    required: true
+    defaultvalue: Vic CSU
+    type: 0
+    additionalinfo: ""
 description: Cydarm Ticketing Integration
 display: Cydarm
 name: Cydarm
@@ -169,6 +175,189 @@ script:
         - contextPath: Cydarm.CaseData.encryptionkey
           description: Data Encryption key (if any)
           type: String
+    - name: cydarm-get-user
+      description: Gets the API User information
+      deprecated: false
+      arguments: []
+      outputs:
+        - contextPath: Cydarm.UserInfo.uuid
+          description: User UUID
+          type: String
+        - contextPath: Cydarm.UserInfo.username
+          description: Username
+          type: String
+        - contextPath: Cydarm.UserInfo.email
+          description: User Email
+          type: String
+    - name: cydarm-create-case
+      description: Create a case in Cydarm
+      deprecated: false
+      arguments:
+        - name: acl
+          description: The UUID of the ACL
+          required: false
+          isArray: false
+        - name: assignee
+          description: The name of the current assignee
+          required: false
+          isArray: false
+        - name: description
+          description: description
+          required: true
+          isArray: false
+        - name: severity
+          description: The severity of the case
+          required: false
+          isArray: false
+        - name: status
+          description: The current status of the case
+          required: false
+          isArray: false
+        - name: tags
+          description: The tags attached to this case, in CSV format
+          required: false
+          isArray: true
+      outputs:
+        - contextPath: Cydarm.NewCase.uuid
+          description: New Case UUID
+          type: String
+    - name: cydarm-case-add-meta
+      description: Add metadata to a case
+      deprecated: false
+      arguments:
+        - name: uuid
+          description: Case UUID
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: name
+          description: Name of the metadata field
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: value
+          description: Value of the metadata field
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs: []
+    - name: cydarm-case-add-tag
+      description: Add a tag to a case
+      deprecated: false
+      arguments:
+        - name: uuid
+          description: Case UUID
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: tag
+          description: Tag Name
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs: []
+    - name: cydarm-case-update
+      description: Update case
+      deprecated: false
+      arguments:
+        - name: assignee
+          description: The name of the current assignee
+          required: false
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: description
+          description: description
+          required: false
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: severityName
+          description: The severity name for the case
+          required: false
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: uuid
+          description: Case UUID
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: status
+          description: Case Status
+          required: false
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs: []
+    - name: cydarm-case-add-comment
+      description: Add a Text comment to a case
+      deprecated: false
+      arguments:
+        - name: uuid
+          description: Case UUID
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: significance
+          description: Significance of comment
+          required: true
+          isArray: false
+          defaultValue: Comment
+          predefined:
+            - ""
+        - name: data
+          description: Comment data
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs: []
+    - name: cydarm-case-add-file-comment
+      description: Add a file as a comment
+      deprecated: false
+      arguments:
+        - name: uuid
+          description: Case UUID
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: file_entryId
+          description: File EntryID
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: mime_type
+          description: File MIME type
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs: []
   dockerimage: demisto/python3:3.10.1.26972
   runonce: false
   script: ""

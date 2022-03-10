@@ -16,10 +16,11 @@ import dateparser
 
 class Client(BaseClient):
 
-    def __init__(self, username, password, endpoint):
+    def __init__(self, username, password, endpoint, org):
         self.endpoint = endpoint
         self.username = username
         self.password = password
+        self.org = org
 
     def login(self) -> str:
         username = base64.b64encode(self.username.encode()).decode("utf-8")
@@ -111,7 +112,117 @@ class Client(BaseClient):
             js.update({"data": data})
             return js
         return {}
+    
+    def createCase(self, args: dict):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        args.update({"org": self.org})
 
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api/case"
+
+        if "severity" in args.keys():
+            args.update({"severity": int(args["severity"])})
+
+        r = requests.post(url, data=json.dumps(args), headers=headers)
+
+        if r.status_code == 201:
+            self.logout(login_token)
+            return r.json()
+        raise Exception(f"Failed to create case - {r.status_code}: {r.text}")
+    
+    def addCaseMetadata(self, uuid: str, name: str, value: str):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api/case/{uuid}/meta"
+        data = {
+            "create": [
+                {
+                    "name": name,
+                    "value": value
+                }
+            ]
+        }
+        r = requests.post(url, headers=headers, data=json.dumps(data))
+        if r.status_code == 204:
+            self.logout(login_token)
+            return {}
+        raise Exception(f"Failed to add Metadata - {r.status_code}: {r.text}")
+    
+    def addCaseTag(self, uuid: str, tag: str):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api/case/{uuid}/tag"
+        data = {
+            "tagValue": tag,
+
+        }
+        r = requests.post(url, headers=headers, data=json.dumps(data))
+        if r.status_code == 200:
+            self.logout(login_token)
+            return r.json()
+        raise Exception(f"Failed to add Tag - {r.status_code}: {r.text}")
+    
+    def updateCase(self, uuid: str, args: dict):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api/case/{uuid}"
+        r = requests.put(url, headers=headers, data=json.dumps(args))
+        if r.status_code == 204:
+            self.logout(login_token)
+            return {}
+        raise Exception(f"Failed to set case status - {r.status_code}: {r.text}")
+    
+    def createComment(self, uuid: str, data: str, significance: str):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api/case/{uuid}/data"
+        data = {
+            "mimeType": "text/plain",
+            "significance": significance,
+            "data": base64.b64encode(data.encode()).decode()
+        }
+        r = requests.post(url, headers=headers, data=json.dumps(data))
+        if r.status_code == 201:
+            self.logout(login_token)
+            return r.json()
+        raise Exception(f"Failed to add comment - {r.status_code}: {r.text}")
+    
+    def createFileComment(self, uuid: str, fileEntryId: str, mimeType: str):
+        file_meta = demisto.getFilePath(fileEntryId)
+        file_data = open(file_meta["path"], "rb").read()
+
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api/case/{uuid}/data"
+        data = {
+            "mimeType": mimeType,
+            "significance": "Comment",
+            "data": base64.b64encode(file_data).decode(),
+            "fileName": file_meta["name"]
+        }
+        r = requests.post(url, headers=headers, data=json.dumps(data))
+        if r.status_code == 201:
+            self.logout(login_token)
+            return r.json()
+        raise Exception(f"Failed to add file comment - {r.status_code}: {r.text}")
 
 
 ''' HELPER FUNCTIONS '''
@@ -171,7 +282,65 @@ def get_user_info(client: Client):
     data = client.getUserInfo()
     values = [""]
     return CommandResults(
-        outputs_prefix='Cydarm.CaseActions',
+        outputs_prefix='Cydarm.UserInfo',
+        readable_output=data,
+        outputs=data
+    )
+
+def create_case(client: Client, args: dict):
+    if type(args) != dict:
+        raise Exception("Invalid Arguments, not dict type")
+    
+    if "tags" in args.keys():
+        args.update({"tags": args["tags"].split(",")})
+    
+    data = client.createCase(args)
+    return CommandResults(
+        outputs_prefix='Cydarm.NewCase',
+        readable_output=data,
+        outputs=data
+    )
+
+def add_case_meta(client: Client, uuid: str, name: str, value: str):
+    data = client.addCaseMetadata(uuid, name, value)
+
+    return CommandResults(
+        outputs_prefix='Cydarm.CaseMeta',
+        readable_output=data,
+        outputs=data
+    )
+
+def add_case_tag(client: Client, uuid: str, tag: str):
+    data = client.addCaseTag(uuid, tag)
+
+    return CommandResults(
+        outputs_prefix='Cydarm.CaseTag',
+        readable_output=data,
+        outputs=data
+    )
+
+def update_case(client: Client, uuid: str, args: dict):
+    args.pop("uuid")
+    data = client.updateCase(uuid, args)
+
+    return CommandResults(
+        outputs_prefix='Cydarm.UpdatedCase',
+        readable_output=data,
+        outputs=data
+    )
+    
+def create_comment(client: Client, uuid: str, significance: str, data: str):
+    data = client.createComment(uuid, data, significance)
+    return CommandResults(
+        outputs_prefix='Cydarm.NewComment',
+        readable_output=data,
+        outputs=data
+    )
+
+def create_file_comment(client: Client, uuid: str, fileEntryId: str, mimeType: str):
+    data = client.createFileComment(uuid, fileEntryId, mimeType)
+    return CommandResults(
+        outputs_prefix='Cydarm.NewComment',
         readable_output=data,
         outputs=data
     )
@@ -189,13 +358,15 @@ def main() -> None:
     username = demisto.params().get('login', {}).get('identifier')
     password = demisto.params().get('login', {}).get('password')
     base_url = demisto.params()["endpoint"]
+    org_name = demisto.params()["org_name"]
 
     demisto.debug(f'Command being called is {demisto.command()}')
     try:
         client = Client(
             endpoint=base_url,
             username=username,
-            password=password)
+            password=password,
+            org=org_name)
 
         if demisto.command() == 'test-module':
             # This is the call made when pressing the integration Test button.
@@ -212,6 +383,27 @@ def main() -> None:
             return_results(result)
         elif demisto.command() == "cydarm-get-data-object":
             result = get_data_object(client, demisto.args()["uuid"])
+            return_results(result)
+        elif demisto.command() == "cydarm-get-user":
+            result = get_user_info(client)
+            return_results(result)
+        elif demisto.command() == "cydarm-create-case":
+            result = create_case(client, demisto.args())
+            return_results(result)
+        elif demisto.command() == "cydarm-case-add-meta":
+            result = add_case_meta(client, demisto.args()["uuid"], demisto.args()["name"], demisto.args()["value"])
+            return_results(result)
+        elif demisto.command() == "cydarm-case-add-tag":
+            result = add_case_tag(client, demisto.args()["uuid"], demisto.args()["tag"])
+            return_results(result)
+        elif demisto.command() == "cydarm-case-update":
+            result = update_case(client, demisto.args()["uuid"], demisto.args())
+            return_results(result)
+        elif demisto.command() == "cydarm-case-add-comment":
+            result = create_comment(client, demisto.args()["uuid"], demisto.args()["significance"], demisto.args()["data"])
+            return_results(result)
+        elif demisto.command() == "cydarm-case-add-file-comment":
+            result = create_file_comment(client, demisto.args()["uuid"], demisto.args()["file_entryId"], demisto.args()["mime_type"])
             return_results(result)
 
     # Log exceptions and return errors
