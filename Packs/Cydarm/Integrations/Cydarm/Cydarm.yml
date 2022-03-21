@@ -358,6 +358,44 @@ script:
           predefined:
             - ""
       outputs: []
+    - name: cydarm-case-create-stix
+      description: Create a STIX bundle for a case
+      deprecated: false
+      arguments:
+        - name: url
+          description: Case URL to send data to
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: data
+          description: Json String of data to send
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs: []
+    - name: cydarm-reply-comment
+      description: Reply to a comment
+      deprecated: false
+      arguments:
+        - name: url
+          description: Case URL
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+        - name: data
+          description: Data to reply with
+          required: true
+          isArray: false
+          defaultValue: ""
+          predefined:
+            - ""
+      outputs: []
   dockerimage: demisto/python3:3.10.1.26972
   runonce: false
   script: ""

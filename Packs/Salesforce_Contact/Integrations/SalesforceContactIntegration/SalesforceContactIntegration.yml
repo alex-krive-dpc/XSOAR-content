@@ -1,0 +1,62 @@
+category: Utilities
+commonfields:
+  id: Salesforce Contact Integration
+  version: -1
+configuration:
+- defaultvalue: https://login.salesforce.com
+  display: 'URL Used to send login (eg: https://login.salesforce.com)'
+  name: login_url
+  required: true
+  type: 0
+- display: Username
+  displaypassword: Password
+  name: userpass
+  required: true
+  type: 9
+- display: Client ID
+  displaypassword: Client Secred
+  name: clientdata
+  required: true
+  type: 9
+description: Integrating Salesforce Campaigns and member lists for getting lists of
+  users
+display: Salesforce Contact Integration
+name: Salesforce Contact Integration
+script:
+  commands:
+  - arguments:
+    - name: campaignId
+      required: true
+    name: sf-get-campaign
+  - arguments:
+    - name: campaignId
+      required: true
+    name: sf-get-campaign-members
+    outputs:
+    - contextPath: Salesforce.CampaignMember.CompanyOrAccount
+      type: string
+    - contextPath: Salesforce.CampaignMember.ContactId
+      type: string
+    - contextPath: Salesforce.CampaignMember.Email
+      type: string
+    - contextPath: Salesforce.CampaignMember.Id
+      type: string
+    - contextPath: Salesforce.CampaignMember.Name
+      type: string
+  - arguments:
+    - name: memberId
+      required: true
+    name: sf-get-campaign-member-data
+  - arguments:
+    - name: memberId
+      required: true
+    name: sf-get-member-data
+  - arguments:
+    - name: query
+      required: true
+    name: sf-query
+  dockerimage: demisto/python3:3.9.8.24399
+  runonce: false
+  script: ''
+  subtype: python3
+  type: python

@@ -223,6 +223,41 @@ class Client(BaseClient):
             self.logout(login_token)
             return r.json()
         raise Exception(f"Failed to add file comment - {r.status_code}: {r.text}")
+    
+    def uploadStix(self, case_url: str, data_str: str):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api{case_url}"
+        data = {
+            "mimeType": "application/stix+json;version=2.1",
+            "data": base64.b64encode(data_str.encode()).decode()
+        }
+        r = requests.post(url, headers=headers, data=json.dumps(data))
+        if r.status_code == 201:
+            self.logout(login_token)
+            return r.json()
+        raise Exception(f"Failed to add comment - {r.status_code}: {r.text}")
+    
+    def replyComment(self, case_url: str, text: str):
+        login_status, login_token = self.login()
+        if login_status != 200:
+            raise Exception("Failed to login!")
+        
+        headers = {"User-Agent": "DPC XSOAR", "Accept": "application/json", "x-cydarm-authz": login_token}
+        url = self.endpoint + f"/cydarm-api{case_url}"
+        data = {
+            "mimeType": "text/plain",
+            "significance": "Comment",
+            "data": base64.b64encode(text.encode()).decode()
+        }
+        r = requests.post(url, headers=headers, data=json.dumps(data))
+        if r.status_code == 201:
+            self.logout(login_token)
+            return r.json()
+        raise Exception(f"Failed to add comment - {r.status_code}: {r.text}")
 
 
 ''' HELPER FUNCTIONS '''
@@ -345,6 +380,22 @@ def create_file_comment(client: Client, uuid: str, fileEntryId: str, mimeType: s
         outputs=data
     )
 
+def create_stix(client: Client, url: str, data_str: str):
+    data = client.uploadStix(url, data_str)
+    return CommandResults(
+        outputs_prefix='Cydarm.StixBundle',
+        readable_output=data,
+        outputs=data
+    )
+
+def reply_comment(client: Client, case_url: str, data_str: str):
+    data = client.replyComment(case_url, data_str)
+    return CommandResults(
+        outputs_prefix='Cydarm.NewComment',
+        readable_output=data,
+        outputs=data
+    )
+
 ''' MAIN FUNCTION '''
 
 
@@ -404,6 +455,12 @@ def main() -> None:
             return_results(result)
         elif demisto.command() == "cydarm-case-add-file-comment":
             result = create_file_comment(client, demisto.args()["uuid"], demisto.args()["file_entryId"], demisto.args()["mime_type"])
+            return_results(result)
+        elif demisto.command() == "cydarm-case-create-stix":
+            result = create_stix(client, demisto.args()["url"], demisto.args()["data"])
+            return_results(result)
+        elif demisto.command() == "cydarm-reply-comment":
+            result = reply_comment(client, demisto.args()["url"], demisto.args()["data"])
             return_results(result)
 
     # Log exceptions and return errors
